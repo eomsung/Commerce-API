@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String      @id @default(uuid())
+  email             String      @unique
+  encryptedPassword String
+  createdAt         DateTime    @default(now())
+  nickname          String
+  cart              Cart?
+  order             Order[]
+  orderItems        OrderItem[]
+}
+
+model Product {
+  id            String          @id @default(uuid())
+  name          String
+  originalPrice Int
+  finalPrice    Int
+  stock         Int             @default(0)
+  createdAt     DateTime        @default(now())
+  category      productCategory @relation(fields: [categoryId], references: [id])
+  categoryId    String
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+}
+
+model productCategory {
+  id       String    @id @default(uuid())
+  name     String
+  lable    String
+  Products Product[]
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    String     @unique
+  cartItems CartItem[]
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  cartId    String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id                  String      @id @default(uuid())
+  user                User        @relation(fields: [userId], references: [id])
+  userId              String
+  customerName        String
+  customerPhoneNumber String
+  customerAddress     String
+  totalAmount         Int?
+  paidAmount          Int         @default(0)
+  refundedAmount      Int         @default(0)
+  balanceAmount       Int         @default(0)
+  status              OrderStatus @default(pending)
+  createdAt           DateTime    @default(now())
+  orderItems          OrderItem[]
+}
+
+enum OrderStatus {
+  pending
+  success
+  partiallyCanceled
+  cancelled
+}
+
+enum OrderItmeStatus {
+  pending
+  success
+  cancelled
+}
+
+model OrderItem {
+  id          String          @id @default(uuid())
+  user        User            @relation(fields: [userId], references: [id])
+  userId      String
+  order       Order           @relation(fields: [orderId], references: [id])
+  orderId     String
+  product     Product         @relation(fields: [productId], references: [id])
+  productId   String
+  productInfo Json
+  finalPrice  Int
+  quantity    Int
+  totalAmount Int
+  status      OrderItmeStatus @default(pending)
+  createAt    DateTime        @default(now())
+}
